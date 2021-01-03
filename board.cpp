@@ -182,6 +182,7 @@ void Board::eraseLast() {
     turn *= -1;
     pieceCount--;
 
+    roi.insert(idx); // add this to the search
     int row = idx/BOARD_SIZE;
     int col = idx%BOARD_SIZE;
     for (int r = max(0, row-2); r < min(row+3, BOARD_SIZE); r++) {
@@ -189,11 +190,211 @@ void Board::eraseLast() {
             int i = BOARD_SIZE*r+c;
             roiCount[i]--;
             if (roiCount[i] == 0) roi.erase(i);
-            else if (cells[i] == 0) roi.insert(i);
         }
     }
 }
 
 int Board::getTurn() {
     return turn;
+}
+
+int Board::quickScore(int streak, int blocked) {
+    int length = abs(streak);
+    if (length < 2) return 0;
+    else if (blocked == 2) return streak;
+    
+    int sign = streak/length;
+    int score = sign*TWO;
+    if (length == 3) score = sign*THREE;
+    else if (length == 4) score = sign*FOUR;
+
+    if (blocked == 1) score /= 2;
+
+    // cout << "length: " << length << " color: " << sign << " blocked: " << blocked << endl;
+    return score;
+}
+
+int Board::eval() {
+    int score = 0;
+    // rows
+    for (int r = 0; r < BOARD_SIZE; r++) {
+        int start = BOARD_SIZE*r;
+        int end = start+BOARD_SIZE;
+        int lastPiece = -cells[start];
+        int streak = 0;
+        int blocked = 0;
+        for (int i = start; i < end; i++) {
+            int thisPiece = cells[i];
+            if (abs(thisPiece-lastPiece) == 2) { // new streak
+                blocked++;
+                score += quickScore(streak, blocked);
+                streak = thisPiece;
+                blocked = 1; // clear streak with 1 blocked end
+            } else if (thisPiece == 0 && lastPiece == 0) { // new streak
+                score += quickScore(streak, blocked);
+                streak = 0;
+                blocked = 0; // new streak without blocked
+            } else if (thisPiece != 0 && lastPiece == 0 && streak*thisPiece < 0) {
+                score += quickScore(streak, blocked);
+                streak = thisPiece;
+                blocked = 0;
+            } else streak += thisPiece; // normal
+            
+            lastPiece = thisPiece;
+        }
+        int thisPiece = -lastPiece;
+        if (thisPiece != 0) blocked++;
+        score += quickScore(streak, blocked);
+    }
+    // cols
+    for (int c = 0; c < BOARD_SIZE; c++) {
+        int start = c;
+        int end = start+BOARD_SIZE*BOARD_SIZE;
+        int lastPiece = -cells[start];
+        int streak = 0;
+        int blocked = 0;
+        for (int i = start; i < end; i+=BOARD_SIZE) {
+            int thisPiece = cells[i];
+            if (abs(thisPiece-lastPiece) == 2) { // new streak
+                blocked++;
+                score += quickScore(streak, blocked);
+                streak = thisPiece;
+                blocked = 1; // clear streak with 1 blocked end
+            } else if (thisPiece == 0 && lastPiece == 0) { // new streak
+                score += quickScore(streak, blocked);
+                streak = 0;
+                blocked = 0; // new streak without blocked
+            } else if (thisPiece != 0 && lastPiece == 0 && streak*thisPiece < 0) {
+                score += quickScore(streak, blocked);
+                streak = thisPiece;
+                blocked = 0;
+            } else streak += thisPiece; // normal
+            
+            lastPiece = thisPiece;
+        }
+        int thisPiece = -lastPiece;
+        if (thisPiece != 0) blocked++;
+        score += quickScore(streak, blocked);
+    }
+    // diags
+    for (int k = 4; k < BOARD_SIZE*2-1-4; k++) {
+        int i = max(0, k-BOARD_SIZE+1), j = min(k, BOARD_SIZE-1);
+
+        int lastPiece = -cells[BOARD_SIZE*i+j];
+        int streak = 0;
+        int blocked = 0;
+        while (i < BOARD_SIZE && j >= 0) {
+            int thisPiece = cells[(i++)*BOARD_SIZE + (j--)];
+            if (abs(thisPiece-lastPiece) == 2) { // new streak
+                blocked++;
+                score += quickScore(streak, blocked);
+                streak = thisPiece;
+                blocked = 1; // clear streak with 1 blocked end
+            } else if (thisPiece == 0 && lastPiece == 0) { // new streak
+                score += quickScore(streak, blocked);
+                streak = 0;
+                blocked = 0; // new streak without blocked
+            } else if (thisPiece != 0 && lastPiece == 0 && streak*thisPiece < 0) {
+                score += quickScore(streak, blocked);
+                streak = thisPiece;
+                blocked = 0;
+            } else streak += thisPiece; // normal
+            
+            lastPiece = thisPiece;
+        }
+        int thisPiece = -lastPiece;
+        if (thisPiece != 0) blocked++;
+        score += quickScore(streak, blocked);
+    }
+    for (int k = 4; k < BOARD_SIZE*2-1-4; k++) {
+        int i = max(0, k-BOARD_SIZE+1), j = min(k, BOARD_SIZE-1);
+
+        int lastPiece = -cells[BOARD_SIZE*(BOARD_SIZE-1-i) + j];
+        int streak = 0;
+        int blocked = 0;
+        while (i < BOARD_SIZE && j >= 0) {
+            int thisPiece = cells[(BOARD_SIZE-1-(i++))*BOARD_SIZE + (j--)];
+            if (abs(thisPiece-lastPiece) == 2) { // new streak
+                blocked++;
+                score += quickScore(streak, blocked);
+                streak = thisPiece;
+                blocked = 1; // clear streak with 1 blocked end
+            } else if (thisPiece == 0 && lastPiece == 0) { // new streak
+                score += quickScore(streak, blocked);
+                streak = 0;
+                blocked = 0; // new streak without blocked
+            } else if (thisPiece != 0 && lastPiece == 0 && streak*thisPiece < 0) {
+                score += quickScore(streak, blocked);
+                streak = thisPiece;
+                blocked = 0;
+            } else streak += thisPiece; // normal
+            
+            lastPiece = thisPiece;
+        }
+        int thisPiece = -lastPiece;
+        if (thisPiece != 0) blocked++;
+        score += quickScore(streak, blocked);
+    }
+    return score;
+}
+
+int Board::isOver() {
+    // rows
+    for (int r = 0; r < BOARD_SIZE; r++) {
+        int start = BOARD_SIZE*r;
+        int end = start+BOARD_SIZE;
+        int lastPiece = -cells[start];
+        int streak = 0;
+        for (int i = start; i < end; i++) {
+            int thisPiece = cells[i];
+            streak += thisPiece;
+            if (thisPiece != lastPiece) streak = thisPiece;
+            else if (abs(streak) >= 5) return streak;
+            lastPiece = thisPiece;
+        }
+    }
+    // cols
+    for (int c = 0; c < BOARD_SIZE; c++) {
+        int start = c;
+        int end = start+BOARD_SIZE*BOARD_SIZE;
+        int lastPiece = -cells[start];
+        int streak = 0;
+        for (int i = start; i < end; i+=BOARD_SIZE) {
+            int thisPiece = cells[i];
+            streak += thisPiece;
+            if (thisPiece != lastPiece) streak = thisPiece;
+            else if (abs(streak) >= 5) return streak;
+            lastPiece = thisPiece;
+        }
+    }
+    // diags
+    for (int k = 4; k < BOARD_SIZE*2-1-4; k++) {
+        int i = max(0, k-BOARD_SIZE+1), j = min(k, BOARD_SIZE-1);
+
+        int lastPiece = -cells[BOARD_SIZE*i+j];
+        int streak = 0;
+        int n = 0;
+        while ((n++) < abs(j-i)+1) {
+            int thisPiece = cells[(i++)*BOARD_SIZE + (j--)];
+            streak += thisPiece;
+            if (thisPiece != lastPiece) streak = thisPiece;
+            else if (abs(streak) >= 5) return streak;
+            lastPiece = thisPiece;
+        }
+    }
+    for (int k = 4; k < BOARD_SIZE*2-1-4; k++) {
+        int i = max(0, k-BOARD_SIZE+1), j = min(k, BOARD_SIZE-1);
+
+        int lastPiece = -cells[BOARD_SIZE*(BOARD_SIZE-1-i) + j];
+        int streak = 0;
+        int n = 0;
+        while ((n++) < abs(j-i)+1) {
+            int thisPiece = cells[(BOARD_SIZE-1-(i++))*BOARD_SIZE + (j--)];
+            streak += thisPiece;
+            if (thisPiece != lastPiece) streak = thisPiece;
+            else if (abs(streak) >= 5) return streak;
+            lastPiece = thisPiece;
+        }
+    }
+    return 0;
 }

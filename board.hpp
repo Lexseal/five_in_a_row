@@ -40,6 +40,9 @@ public:
     int getTurn();
     int getScore(vector<int> &tile);
     unordered_set<int> getROI() const;
+    int isOver();
+    int quickScore(int streak, int blocked);
+    int eval();
     
     friend ostream & operator << (std::ostream & _os, Board const &board) {
         for (int r = 0; r < BOARD_SIZE; r++) {

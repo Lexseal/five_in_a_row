@@ -1,3 +1,5 @@
 app
 debug
 .vscode/
+gprof2dot.py
+output.svg

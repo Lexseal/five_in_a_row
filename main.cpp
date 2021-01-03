@@ -5,7 +5,10 @@
 using namespace std;
 
 int evaluate(Board &board, int depth, int alpha, int beta, int maxDepth) {
-    int eval = board.boardValue();
+    // int winner = board.isOver();
+    // if (winner != 0) return FIVE*winner;
+    // else if (depth == maxDepth) return board.eval();
+    int eval = board.eval();
     if (depth == maxDepth || abs(eval) >= FOUR) return eval;
 
     bool isMax = true;
@@ -16,11 +19,10 @@ int evaluate(Board &board, int depth, int alpha, int beta, int maxDepth) {
         bestEval = FIVE;
     }
 
-    auto roi = board.getROI();
-    for (int i : roi) { // try everything
+    for (int i : board.getROI()) { // try everything
         board.place(i);
         //cout << board << endl;
-        eval = evaluate(board, depth+1, alpha, beta, maxDepth);
+        int eval = evaluate(board, depth+1, alpha, beta, maxDepth);
         if ((isMax && eval > bestEval) || (!isMax && eval < bestEval)) {
             bestEval = eval;
             bestMove = i;
@@ -31,7 +33,7 @@ int evaluate(Board &board, int depth, int alpha, int beta, int maxDepth) {
 
         if (isMax) alpha = max(alpha, eval);
         else beta = min(beta, eval);
-        if (beta <= alpha) break;
+        if (alpha >= beta) break;
     }
 
     if (depth == 0) return bestMove;
@@ -55,9 +57,9 @@ int main(int argc, char const *argv[]) {
 
     // cout << board << endl;
 
-    // cout << board.boardValue() << endl;
+    // cout << board.eval() << endl;
         
-    cout << "enter a coordinate separated by space: " << endl; 
+    std::cout << "enter a coordinate separated by space: " << endl; 
     while (true) {
         // user
         int row, col;
@@ -66,22 +68,22 @@ int main(int argc, char const *argv[]) {
             while(cin.fail()) {
                 cin.clear();
                 cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                cout<< "invalid input" <<endl;
+                std::cout<< "invalid input" <<endl;
                 cin >> row >> col;
             }
         } while (board.place(row, col) == false);
-        cout << board << endl;
+        std::cout << board << endl;
         if (abs(board.boardValue()) >= FOUR) break; // has a result
 
         // computer
-        board.place(evaluate(board, 0, -FIVE, FIVE, 4));
-        cout << board << endl;
+        board.place(evaluate(board, 0, -FIVE, FIVE, 5));
+        std::cout << board << endl;
         if (abs(board.boardValue()) >= FOUR) break; // has a result
     }
 
     char winner = 'x';
     if (board.boardValue() < 0) winner = 'o';
-    cout << "the winner is: " << winner << endl; 
+    std::cout << "the winner is: " << winner << endl; 
     
     return 0;
 }
