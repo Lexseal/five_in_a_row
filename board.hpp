@@ -45,18 +45,32 @@ public:
     int eval();
     
     friend ostream & operator << (std::ostream & _os, Board const &board) {
+        _os << "   ";
+        int n = 0;
+        for (int c = 0; c < BOARD_SIZE; c++) {
+            if ((n++) % 2 == 0) _os << "\033[0;" << "43m" << c << "\033[0m ";
+            else _os << "\033[0;" << "44m" << c << "\033[0m ";
+            if (c <= 9) _os << ' '; // add another
+        }
+        _os << '\n';
+        
+        n = 0;
         for (int r = 0; r < BOARD_SIZE; r++) {
+            if ((n++) % 2 == 0) _os << "\033[0;" << "43m" << r << "\033[0m ";
+            else _os << "\033[0;" << "44m" << r << "\033[0m ";
+            if (r <= 9) _os << ' '; // add another
+            
             for (int c = 0; c < BOARD_SIZE; c++) {
-                char symbol = '.';
+                string symbol = ".";
                 int idx = BOARD_SIZE*r+c;
                 int value = board.cells[idx];
-                if (value == 1) symbol = 'x';
-                else if (value == -1) symbol = 'o';
+                if (value == 1) symbol = "\033[1;41mx\033[0m";
+                else if (value == -1) symbol = "\033[1;42mo\033[0m";
                 else {
                     auto roi = board.getROI();
-                    if (roi.find(idx) != roi.end()) symbol = '_';
+                    if (roi.find(idx) != roi.end()) symbol = "_";
                 }
-                _os << symbol << " ";
+                _os << symbol << "  ";
             }
             _os << '\n';
         }
